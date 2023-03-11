@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func main() {
+func crypt() {
 	fmt.Println("Hello, world.")
 
 	privateKeyAlice, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -38,5 +38,4 @@ func main() {
 	}
 
 	fmt.Println("decrypted message: ", string(decryptBytes))
-
 }
