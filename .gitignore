@@ -371,3 +371,6 @@ MigrationBackup/
 
 # Environment variables
 .env
+private.key
+public.key
+private.pem
