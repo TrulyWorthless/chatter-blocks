@@ -1,4 +1,4 @@
-module github.com/trulyworthless/blockchain-chat
+module github.com/trulyworthless/chatter-blocks
 
 go 1.20
 
