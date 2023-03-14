@@ -27,7 +27,7 @@ func main() {
 	// key flow
 	GenerateKey()
 	privateRSAKey := GetKey()
-	encryptedBytes := Encrypt(privateRSAKey, "super secret message")
+	encryptedBytes := Encrypt(privateRSAKey, "super secret message again")
 	decryptedMessage := Decrypt(privateRSAKey, encryptedBytes)
 	fmt.Println("decrypted message: ", decryptedMessage)
 
@@ -69,9 +69,33 @@ func main() {
 
 	message, err := instance.ReadResponseAt(&a, big.NewInt(1))
 	if err != nil {
-		fmt.Printf("herhere")
 		log.Fatal(err)
 	}
 
 	fmt.Printf("\nmessage: %s", message)
+
+	// submit encrypted message
+	// myString := string(encryptedBytes[:])
+	// fmt.Printf("\nmessage: %s", myString)
+	// fmt.Printf("\nmessage: %x", myString)
+
+	// fmt.Printf("\nmessage: %s", encryptedBytes)
+	// fmt.Printf("\nmessage: %x", encryptedBytes)
+
+	tx2 := SubmitTransaction(client, privateKey, instance, string(encryptedBytes))
+
+	_ = tx2
+
+	message2, err := instance.ReadResponseAt(&a, big.NewInt(2))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\nmessage: %s", message2)
+
+	b := []byte(message2.Text)
+
+	decryptedMessage2 := Decrypt(privateRSAKey, b)
+	fmt.Println("\ndecrypted message2: ", decryptedMessage2)
+
 }
