@@ -11,11 +11,13 @@ import (
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
 )
 
 func GenerateWallet() *ecdsa.PrivateKey {
@@ -35,20 +37,6 @@ func GetAddress(privateKey *ecdsa.PrivateKey) string {
 	}
 
 	return crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
-}
-
-func CheckBalance(client *ethclient.Client, address string) *big.Float {
-	account := common.HexToAddress(address)
-	balance, err := client.BalanceAt(context.Background(), account, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fbalance := new(big.Float)
-	fbalance.SetString(balance.String())
-	ethValue := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(18)))
-
-	return ethValue
 }
 
 // TODO: file name?
@@ -82,7 +70,21 @@ func ImportKeysStore(file, pass string) {
 	}
 }
 
-func transferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *big.Int, destination common.Address) {
+func CheckBalance(client *ethclient.Client, address string) *big.Float {
+	account := common.HexToAddress(address)
+	balance, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fbalance := new(big.Float)
+	fbalance.SetString(balance.String())
+	ethValue := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(18)))
+
+	return ethValue
+}
+
+func TransferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *big.Int, destination common.Address) {
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -133,6 +135,103 @@ func transferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *
 	}
 
 	fmt.Printf("transaction hash: %s", signedTx.Hash().Hex())
+}
+
+// todo make not specific to channel
+func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *big.Int) (common.Address, *types.Transaction, *simplechannel.Simplechannel) {
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		panic(err)
+	}
+
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = value              // in wei
+	auth.GasLimit = uint64(2000000) // in units TODO make dynamic
+	auth.GasPrice = gasPrice
+
+	address, tx, instance, err := simplechannel.DeploySimplechannel(auth, client, common.HexToAddress("0xE5b4C8bcA8237D9F2D7201f7bC744b697aCF8A23"), common.HexToAddress("0xe8148308ef1692e0f169F3FB8C0608a6E9625603"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\ncontract address: %s", address)
+
+	_ = instance
+	_ = tx
+	return address, tx, instance
+}
+
+// todo make not specific to channel
+func GetContract(client *ethclient.Client, address common.Address) *simplechannel.Simplechannel {
+	instance, err := simplechannel.NewSimplechannel(address, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return instance
+}
+
+func SubmitTransaction(client *ethclient.Client, privateKey *ecdsa.PrivateKey, instance *simplechannel.Simplechannel, message string) *types.Transaction {
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		panic(err)
+	}
+
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)      // in wei
+	auth.GasLimit = uint64(2000000) // in units TODO make dynamic
+	auth.GasPrice = gasPrice
+
+	tx, err := instance.SubmitMessage(auth, message)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return tx
 }
 
 //hashing new changes
