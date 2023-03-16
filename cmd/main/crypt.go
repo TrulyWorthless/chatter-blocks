@@ -8,16 +8,17 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"os"
 )
 
-func GenerateKey() {
+func GenerateKey(name string) {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 
-	pemfile, err := os.Create("private.pem")
+	pemfile, err := os.Create(name + ".pem")
 	if err != nil {
 		panic(err)
 	}
@@ -33,8 +34,10 @@ func GenerateKey() {
 	}
 }
 
-func GetKey() *rsa.PrivateKey {
-	privateKeyFile, err := os.Open("private.pem")
+func GetKey(name string) *rsa.PrivateKey {
+	fileName := name + ".pem"
+	fmt.Println(fileName)
+	privateKeyFile, err := os.Open(fileName)
 	if err != nil {
 		panic(err)
 	}

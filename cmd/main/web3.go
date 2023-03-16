@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -51,7 +50,7 @@ func CreateKeysStore(privateKey *ecdsa.PrivateKey, pass string) accounts.Account
 }
 
 // TODO: fix how it reads and writes
-func ImportKeysStore(file, pass string) {
+func ImportKeysStore(file, pass string) accounts.Account {
 	ks := keystore.NewKeyStore("/wallets", keystore.StandardScryptN, keystore.StandardScryptP)
 	jsonBytes, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -63,11 +62,10 @@ func ImportKeysStore(file, pass string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(account) // 0x20F8D42FB0F667F2E53930fed426f225752453b3
-
 	if err := os.Remove(file); err != nil {
 		log.Fatal(err)
 	}
+	return account
 }
 
 func CheckBalance(client *ethclient.Client, address string) *big.Float {
@@ -133,12 +131,10 @@ func TransferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("transaction hash: %s", signedTx.Hash().Hex())
 }
 
 // todo make not specific to channel
-func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *big.Int) (common.Address, *types.Transaction, *simplechannel.Simplechannel) {
+func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (common.Address, *types.Transaction, *simplechannel.Simplechannel) {
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -167,7 +163,7 @@ func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey, valu
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = value              // in wei
+	auth.Value = big.NewInt(0)      // in wei
 	auth.GasLimit = uint64(2000000) // in units TODO make dynamic
 	auth.GasPrice = gasPrice
 
@@ -176,10 +172,6 @@ func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey, valu
 		log.Fatal(err)
 	}
 
-	fmt.Printf("\ncontract address: %s", address)
-
-	_ = instance
-	_ = tx
 	return address, tx, instance
 }
 
