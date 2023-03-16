@@ -15,7 +15,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
+	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/env"
+	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
 func main() {
@@ -51,7 +53,7 @@ func signUp() {
 		name := scanner.Text()
 
 		if name == "alice" || name == "bob" {
-			GenerateKey(name)
+			crypt.GenerateRSAKeyFile(name)
 			login(name)
 			return
 		} else {
@@ -86,10 +88,10 @@ func login(name string) {
 	}
 
 	//load rsa key
-	privateRSAKey := GetKey(name)
+	privateRSAKey := crypt.RetrieveRSAKey(name)
 
 	//load ecdsa key
-	ganacheKEY := env.GoDotEnvVariable(name)
+	ganacheKEY := env.GoDotEnv(name)
 	privateECDSAKey, err := crypto.HexToECDSA(ganacheKEY)
 	if err != nil {
 		log.Fatal(err)
@@ -107,14 +109,14 @@ func construct(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateE
 
 		switch command {
 		case "Y", "y":
-			_, _, instance := DeployContract(client, privateECDSAKey)
+			_, _, instance := web3.DeployContract(client, privateECDSAKey)
 			fmt.Println("Temporary closed")
 			_ = instance
 			return
 			// message(client, privateRSAKey, privateECDSAKey, instance)
 		case "N", "n":
-			address := env.GoDotEnvVariable("CHANNEL_ADDRESS")
-			message(client, privateRSAKey, privateECDSAKey, GetContract(client, common.HexToAddress(address)))
+			address := env.GoDotEnv("CHANNEL_ADDRESS")
+			message(client, privateRSAKey, privateECDSAKey, web3.GetContract(client, common.HexToAddress(address)))
 		default:
 			fmt.Printf("I'm sorry, but I dont know that response")
 		}
@@ -144,8 +146,8 @@ func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECD
 		scanner.Scan()
 		message := scanner.Text()
 
-		encryptedMessage := Encrypt(privateRSAKey, message)
-		SubmitTransaction(client, privateECDSAKey, contract, string(encryptedMessage))
+		encryptedMessage := crypt.EncryptMessage(privateRSAKey, message)
+		web3.SubmitTransaction(client, privateECDSAKey, contract, string(encryptedMessage))
 
 		response, err := contract.ReadResponseAt(&a, index)
 		if err != nil {
@@ -154,14 +156,14 @@ func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECD
 
 		encryptedResponse := []byte(response.Text)
 
-		decryptedResponse := Decrypt(privateRSAKey, encryptedResponse)
+		decryptedResponse := crypt.DecryptMessage(privateRSAKey, encryptedResponse)
 		fmt.Println("decrypted message: ", decryptedResponse)
 		index = index.Add(index, big.NewInt(1))
 	}
 }
 
 // func origin() {
-// 	// apiKEY := env.GoDotEnvVariable("API_KEY")
+// 	// apiKEY := env.GoDotEnv("API_KEY")
 // 	// client, err := ethclient.Dial("https://mainnet.gateway.tenderly.co/" + apiKEY)
 // 	client, err := ethclient.Dial("HTTP://127.0.0.1:7545")
 // 	if err != nil {
@@ -184,7 +186,7 @@ func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECD
 
 // 	//transaction flow
 // 	//dummy destination
-// 	gKEY := env.GoDotEnvVariable("G_KEY")
+// 	gKEY := env.GoDotEnv("G_KEY")
 // 	privateKey, err := crypto.HexToECDSA(gKEY)
 // 	if err != nil {
 // 		log.Fatal(err)

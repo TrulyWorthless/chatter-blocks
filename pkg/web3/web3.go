@@ -1,10 +1,9 @@
-package main
+package web3
 
 import (
 	"context"
 	"crypto/ecdsa"
-	"io/ioutil"
-	"log"
+	"fmt"
 	"math"
 	"math/big"
 	"os"
@@ -17,25 +16,16 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
+	"github.com/trulyworthless/chatter-blocks/pkg/env"
 )
 
-func GenerateWallet() *ecdsa.PrivateKey {
+func GenerateEOA() *ecdsa.PrivateKey {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return privateKey
-}
-
-func GetAddress(privateKey *ecdsa.PrivateKey) string {
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("error casting public key to ECDSA")
-	}
-
-	return crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 }
 
 // TODO: file name?
@@ -43,7 +33,7 @@ func CreateKeysStore(privateKey *ecdsa.PrivateKey, pass string) accounts.Account
 	ks := keystore.NewKeyStore("./wallets", keystore.StandardScryptN, keystore.StandardScryptP)
 	account, err := ks.ImportECDSA(privateKey, pass)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return account
@@ -52,27 +42,28 @@ func CreateKeysStore(privateKey *ecdsa.PrivateKey, pass string) accounts.Account
 // TODO: fix how it reads and writes
 func ImportKeysStore(file, pass string) accounts.Account {
 	ks := keystore.NewKeyStore("/wallets", keystore.StandardScryptN, keystore.StandardScryptP)
-	jsonBytes, err := ioutil.ReadFile(file)
+	// jsonBytes, err := ioutil.ReadFile(file)
+	jsonBytes, err := os.ReadFile(file)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	account, err := ks.Import(jsonBytes, pass, pass)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	if err := os.Remove(file); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	return account
 }
 
-func CheckBalance(client *ethclient.Client, address string) *big.Float {
+func GetBalance(client *ethclient.Client, address string) *big.Float {
 	account := common.HexToAddress(address)
 	balance, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	fbalance := new(big.Float)
@@ -86,20 +77,20 @@ func TransferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("error casting public key to ECDSA")
+		panic(fmt.Errorf("web3"))
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	gasLimit := uint64(21000)
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	var data []byte
@@ -107,12 +98,12 @@ func TransferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *
 
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	/* //raw transaction data
@@ -123,13 +114,13 @@ func TransferETH(client *ethclient.Client, privateKey *ecdsa.PrivateKey, value *
 	rlp.DecodeBytes(rawTxBytes, &tx)
 	err = client.SendTransaction(context.Background(), tx)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	*/
 
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -138,18 +129,18 @@ func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (com
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("error casting public key to ECDSA")
+		panic(fmt.Errorf("web3"))
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	chainID, err := client.ChainID(context.Background())
@@ -169,7 +160,7 @@ func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (com
 
 	address, tx, instance, err := simplechannel.DeploySimplechannel(auth, client, common.HexToAddress("0xE5b4C8bcA8237D9F2D7201f7bC744b697aCF8A23"), common.HexToAddress("0xe8148308ef1692e0f169F3FB8C0608a6E9625603"))
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return address, tx, instance
@@ -179,7 +170,7 @@ func DeployContract(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (com
 func GetContract(client *ethclient.Client, address common.Address) *simplechannel.Simplechannel {
 	instance, err := simplechannel.NewSimplechannel(address, client)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return instance
@@ -189,18 +180,18 @@ func SubmitTransaction(client *ethclient.Client, privateKey *ecdsa.PrivateKey, i
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("error casting public key to ECDSA")
+		panic(fmt.Errorf("web3"))
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	chainID, err := client.ChainID(context.Background())
@@ -220,11 +211,75 @@ func SubmitTransaction(client *ethclient.Client, privateKey *ecdsa.PrivateKey, i
 
 	tx, err := instance.SubmitMessage(auth, message)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return tx
 }
 
-//hashing new changes
-// hash := sha3.NewLegacyKeccak256()
+func CreateKs() {
+	ks := keystore.NewKeyStore("./tmp", keystore.StandardScryptN, keystore.StandardScryptP)
+	password := "secret"
+	account, err := ks.NewAccount(password)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(account.Address.Hex()) // 0x20F8D42FB0F667F2E53930fed426f225752453b3
+}
+
+func ImportKs() {
+	file := "tmp/UTC--2023-02-19T04-51-14.589991000Z--db56cf470ee09e536016b87428ed52f7d8b60c7f"
+	ks := keystore.NewKeyStore("/tmp", keystore.StandardScryptN, keystore.StandardScryptP)
+	// jsonBytes, err := ioutil.ReadFile(file)
+	jsonBytes, err := os.ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+
+	password := "secret"
+	account, err := ks.Import(jsonBytes, password, password)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(account.Address.Hex()) // 0x20F8D42FB0F667F2E53930fed426f225752453b3
+
+	if err := os.Remove(file); err != nil {
+		panic(err)
+	}
+}
+
+func EmitSubscribe() {
+	apiKEY := env.GoDotEnv("ALCHEMY_API_KEY")
+	client, err := ethclient.Dial("wss://eth-mainnet.g.alchemy.com/v2/" + apiKEY)
+	if err != nil {
+		panic(err)
+	}
+
+	headers := make(chan *types.Header)
+	sub, err := client.SubscribeNewHead(context.Background(), headers)
+	if err != nil {
+		panic(err)
+	}
+
+	for {
+		select {
+		case err := <-sub.Err():
+			panic(err)
+		case header := <-headers:
+			fmt.Println(header.Hash().Hex()) // 0xbc10defa8dda384c96a17640d84de5578804945d347072e091b4e5f390ddea7f
+
+			block, err := client.BlockByHash(context.Background(), header.Hash())
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(block.Hash().Hex())        // 0xbc10defa8dda384c96a17640d84de5578804945d347072e091b4e5f390ddea7f
+			fmt.Println(block.Number().Uint64())   // 3477413
+			fmt.Println(block.Time())              // 1529525947
+			fmt.Println(block.Nonce())             // 130524141876765836
+			fmt.Println(len(block.Transactions())) // 7
+		}
+	}
+}

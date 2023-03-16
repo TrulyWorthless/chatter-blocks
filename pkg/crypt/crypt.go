@@ -1,4 +1,4 @@
-package main
+package crypt
 
 import (
 	"bufio"
@@ -8,21 +8,20 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
-	"os"
+
+	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
-func GenerateKey(name string) {
+func GenerateRSAKeyFile(name string) {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 
-	pemfile, err := os.Create(name + ".pem")
+	pemfile, err := filesystem.CreateFile("identities", name, ".pem")
 	if err != nil {
 		panic(err)
 	}
-	defer pemfile.Close()
 
 	var pemkey = &pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -34,14 +33,11 @@ func GenerateKey(name string) {
 	}
 }
 
-func GetKey(name string) *rsa.PrivateKey {
-	fileName := name + ".pem"
-	fmt.Println(fileName)
-	privateKeyFile, err := os.Open(fileName)
+func RetrieveRSAKey(name string) *rsa.PrivateKey {
+	privateKeyFile, err := filesystem.OpenFile("identities", name, ".pem")
 	if err != nil {
 		panic(err)
 	}
-	defer privateKeyFile.Close()
 
 	pemfileinfo, _ := privateKeyFile.Stat()
 	var size int64 = pemfileinfo.Size()
@@ -63,7 +59,7 @@ func GetKey(name string) *rsa.PrivateKey {
 	return privateKeyImported
 }
 
-func Encrypt(privateKey *rsa.PrivateKey, message string) []byte {
+func EncryptMessage(privateKey *rsa.PrivateKey, message string) []byte {
 	publicKey := privateKey.PublicKey
 
 	encryptedBytes, err := rsa.EncryptOAEP(
@@ -79,7 +75,7 @@ func Encrypt(privateKey *rsa.PrivateKey, message string) []byte {
 	return encryptedBytes
 }
 
-func Decrypt(privateKey *rsa.PrivateKey, encryptedBytes []byte) string {
+func DecryptMessage(privateKey *rsa.PrivateKey, encryptedBytes []byte) string {
 	decryptBytes, err := privateKey.Decrypt(nil, encryptedBytes, &rsa.OAEPOptions{Hash: crypto.SHA256})
 	if err != nil {
 		panic(err)
