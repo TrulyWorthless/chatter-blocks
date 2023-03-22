@@ -1,8 +1,10 @@
 package web3
 
 import (
+	"bufio"
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
@@ -17,7 +19,42 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
 	"github.com/trulyworthless/chatter-blocks/pkg/env"
+	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
+
+func GenerateBlockchainAddressFile(name string, address common.Address) {
+	//TODO use commo.Address
+	file, _ := json.MarshalIndent(address, "", " ")
+	jsonfile, err := filesystem.CreateFile("contacts", name, ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	jsonfile.Write(file)
+}
+
+func RetrieveBlockchainAddress(name string) common.Address {
+	var address common.Address
+	jsonfile, err := filesystem.OpenFile("contacts", name, ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	jsonfileinfo, _ := jsonfile.Stat()
+	var size int64 = jsonfileinfo.Size()
+	jsonbytes := make([]byte, size)
+
+	buffer := bufio.NewReader(jsonfile)
+	_, err = buffer.Read(jsonbytes)
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO use commo.Address
+	json.Unmarshal(jsonbytes, &address)
+
+	return address
+}
 
 func GenerateEOA() *ecdsa.PrivateKey {
 	privateKey, err := crypto.GenerateKey()

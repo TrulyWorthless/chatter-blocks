@@ -372,3 +372,6 @@ MigrationBackup/
 # Environment variables
 .env
 *.pem
+
+# other
+cmd/main/example.txt

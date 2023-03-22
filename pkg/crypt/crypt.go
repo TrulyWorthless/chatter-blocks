@@ -12,7 +12,7 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
-func GenerateRSAKeyFile(name string) {
+func GenerateRSAPrivateKeyFile(name string) {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
@@ -33,7 +33,7 @@ func GenerateRSAKeyFile(name string) {
 	}
 }
 
-func RetrieveRSAKey(name string) *rsa.PrivateKey {
+func RetrieveRSAPrivateKey(name string) *rsa.PrivateKey {
 	privateKeyFile, err := filesystem.OpenFile("identities", name, ".pem")
 	if err != nil {
 		panic(err)
@@ -57,6 +57,48 @@ func RetrieveRSAKey(name string) *rsa.PrivateKey {
 	}
 
 	return privateKeyImported
+}
+
+func GenerateRSAPublicKeyFile(name string, publicKey *rsa.PublicKey) {
+	pemfile, err := filesystem.CreateFile("contacts", name, ".pem")
+	if err != nil {
+		panic(err)
+	}
+
+	var pemkey = &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey)}
+
+	err = pem.Encode(pemfile, pemkey)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func RetrieveRSAPublicKey(name string) *rsa.PublicKey {
+	publicKeyFile, err := filesystem.OpenFile("contacts", name, ".pem")
+	if err != nil {
+		panic(err)
+	}
+
+	pemfileinfo, _ := publicKeyFile.Stat()
+	var size int64 = pemfileinfo.Size()
+	pembytes := make([]byte, size)
+
+	buffer := bufio.NewReader(publicKeyFile)
+	_, err = buffer.Read(pembytes)
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ := pem.Decode([]byte(pembytes))
+
+	publicKeyImported, err := x509.ParsePKCS1PublicKey(data.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return publicKeyImported
 }
 
 func EncryptMessage(privateKey *rsa.PrivateKey, message string) []byte {
