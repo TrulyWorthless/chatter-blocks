@@ -24,7 +24,8 @@ type Profile struct {
 	privateECDSAKey *ecdsa.PrivateKey
 }
 
-func main() {
+func hold() {
+	fmt.Println("\nWelcome to Chatter Blocks!!!")
 	fmt.Println("\nWelcome to Chatter Blocks!!!")
 	fmt.Println("Are you logging in or creating an identity?")
 	fmt.Println("Type 'login' or 'signup'")

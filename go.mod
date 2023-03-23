@@ -24,3 +24,19 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
+
+require (
+	github.com/go-chi/chi/v5 v5.0.8 // indirect
+	github.com/go-pg/migrations/v8 v8.1.0 // indirect
+	github.com/go-pg/pg/v10 v10.11.0 // indirect
+	github.com/go-pg/zerochecker v0.2.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
+	github.com/vmihailenco/bufpool v0.1.11 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
+	github.com/vmihailenco/tagparser v0.1.2 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	gorm.io/gorm v1.24.6 // indirect
+	mellium.im/sasl v0.3.1 // indirect
+)
