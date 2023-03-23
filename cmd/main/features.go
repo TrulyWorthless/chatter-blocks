@@ -13,8 +13,10 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
@@ -105,8 +107,43 @@ func construct(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateE
 	}
 }
 
+func listen(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECDSAKey *ecdsa.PrivateKey, contract common.Address) {
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{contract},
+	}
+
+	fmt.Println("Shhh... We're listening in...")
+
+	logs := make(chan types.Log)
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s := web3.GetContract(client, contract)
+
+	for {
+		select {
+		case err := <-sub.Err():
+			panic(err)
+		case vLog := <-logs:
+			c, err := s.ParseMessageSubmit(vLog)
+			if err != nil {
+				panic(err)
+			}
+
+			// fmt.Printf("%s", c.Message)
+			encryptedResponse := []byte(c.Message)
+
+			decryptedResponse := crypt.DecryptMessage(privateRSAKey, encryptedResponse)
+			fmt.Println("decrypted message: ", decryptedResponse)
+		}
+	}
+}
+
 func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECDSAKey *ecdsa.PrivateKey, contract *simplechannel.Simplechannel) {
 	//info
+	//topic 0xefd2c33b8cf50ad0141e32984c1a365510fcbb88c3bd84e7c158628aa4177765
 	publicKey := privateECDSAKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -143,3 +180,43 @@ func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECD
 		index = index.Add(index, big.NewInt(1))
 	}
 }
+
+// func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECDSAKey *ecdsa.PrivateKey, contract *simplechannel.Simplechannel) {
+// 	//info
+// 	//topic 0xefd2c33b8cf50ad0141e32984c1a365510fcbb88c3bd84e7c158628aa4177765
+// 	publicKey := privateECDSAKey.Public()
+// 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+// 	if !ok {
+// 		log.Fatal("error casting public key to ECDSA")
+// 	}
+
+// 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+// 	a := bind.CallOpts{
+// 		Pending:     false,
+// 		From:        fromAddress,
+// 		BlockNumber: nil,
+// 		Context:     context.Background(),
+// 	}
+
+// 	index := big.NewInt(1)
+// 	fmt.Println("What would you like to say?")
+// 	scanner := bufio.NewScanner(os.Stdin)
+// 	for {
+// 		scanner.Scan()
+// 		message := scanner.Text()
+
+// 		encryptedMessage := crypt.EncryptMessage(privateRSAKey, message)
+// 		web3.SubmitTransaction(client, privateECDSAKey, contract, string(encryptedMessage))
+
+// 		response, err := contract.ReadResponseAt(&a, index)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+
+// 		encryptedResponse := []byte(response.Text)
+
+// 		decryptedResponse := crypt.DecryptMessage(privateRSAKey, encryptedResponse)
+// 		fmt.Println("decrypted message: ", decryptedResponse)
+// 		index = index.Add(index, big.NewInt(1))
+// 	}
+// }

@@ -18,7 +18,8 @@ import (
 
 type Profile struct {
 	name            string
-	client          *ethclient.Client
+	httpClient      *ethclient.Client
+	wsClient        *ethclient.Client
 	privateRSAKey   *rsa.PrivateKey
 	privateECDSAKey *ecdsa.PrivateKey
 }
@@ -84,8 +85,12 @@ func login(name string) {
 	}
 
 	//connect
-	url := "HTTP://127.0.0.1:7545"
-	client, err := ethclient.Dial(url)
+	http, err := ethclient.Dial("HTTP://127.0.0.1:7545")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ws, err := ethclient.Dial("WS://127.0.0.1:7545")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,15 +106,16 @@ func login(name string) {
 	}
 
 	// construct(client, privateRSAKey, privateECDSAKey)
-	logic(Profile{name: name, client: client, privateRSAKey: privateRSAKey, privateECDSAKey: privateECDSAKey})
+	logic(Profile{name: name, httpClient: http, wsClient: ws, privateRSAKey: privateRSAKey, privateECDSAKey: privateECDSAKey})
 }
 
 func logic(profile Profile) {
 	fmt.Println("Would you like to do?")
 	fmt.Println("A. Create new contact")
-	fmt.Println("B. Create a new chat for an existing contract")
-	fmt.Println("C. Chatter with an existing contact")
+	fmt.Println("B. Chatter with an existing contact")
+	fmt.Println("C. Create a new chat for an existing contract")
 	fmt.Println("D. Export an identity")
+	fmt.Println("E. Listen")
 
 	for {
 		var command string
@@ -120,12 +126,16 @@ func logic(profile Profile) {
 			createContact()
 		case "B", "b":
 			address := env.GoDotEnv("CHANNEL_ADDRESS")
-			message(profile.client, profile.privateRSAKey, profile.privateECDSAKey, web3.GetContract(profile.client, common.HexToAddress(address)))
+			message(profile.httpClient, profile.privateRSAKey, profile.privateECDSAKey, web3.GetContract(profile.wsClient, common.HexToAddress(address)))
 		case "C", "c":
-			_, _, instance := web3.DeployContract(profile.client, profile.privateECDSAKey)
-			message(profile.client, profile.privateRSAKey, profile.privateECDSAKey, instance)
+			a, _, instance := web3.DeployContract(profile.httpClient, profile.privateECDSAKey)
+			fmt.Println(a)
+			message(profile.wsClient, profile.privateRSAKey, profile.privateECDSAKey, instance)
 		case "D", "d":
 			export(profile)
+		case "E", "e":
+			address := "0x93b9E7c14661B1e469BBB112f876c48c4a0484D1"
+			listen(profile.wsClient, profile.privateRSAKey, profile.privateECDSAKey, common.HexToAddress(address))
 		default:
 			fmt.Printf("I'm sorry, but I dont know that response")
 		}

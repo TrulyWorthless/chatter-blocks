@@ -24,7 +24,7 @@ contract SimpleChannel is ISimpleChannel, Befuddler {
     //change to bytes?
     function submitMessage(string memory text) public onlyMessanger() override returns (bool) {
         messages.push(Message(msg.sender, text, block.timestamp));
-        emit MessageSubmit(messageCount() - 1, role());
+        emit MessageSubmit(messageCount() - 1, role(), text);
         
         return true;
     }
