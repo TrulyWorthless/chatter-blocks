@@ -117,7 +117,7 @@ func listen(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECDS
 	logs := make(chan types.Log)
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	s := web3.GetContract(client, contract)
@@ -170,7 +170,7 @@ func message(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateECD
 
 		response, err := contract.ReadResponseAt(&a, index)
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 
 		encryptedResponse := []byte(response.Text)

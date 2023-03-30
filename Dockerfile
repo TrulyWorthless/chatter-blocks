@@ -6,7 +6,7 @@ ADD . /app
 
 WORKDIR /app
 
-RUN go build -o main ./cmd/server/main.go
+RUN go build -o main ./main.go
 
-EXPOSE 8080
+EXPOSE 5432
 CMD [ "/app/main" ]

@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -88,12 +87,12 @@ func login(name string) {
 	//connect
 	http, err := ethclient.Dial("HTTP://127.0.0.1:7545")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	ws, err := ethclient.Dial("WS://127.0.0.1:7545")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	//load rsa key
@@ -103,7 +102,7 @@ func login(name string) {
 	ganacheKEY := env.GoDotEnv(name)
 	privateECDSAKey, err := crypto.HexToECDSA(ganacheKEY)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	// construct(client, privateRSAKey, privateECDSAKey)

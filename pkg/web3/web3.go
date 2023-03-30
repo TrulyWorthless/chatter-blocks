@@ -17,8 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/joho/godotenv"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
-	"github.com/trulyworthless/chatter-blocks/pkg/env"
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
@@ -288,7 +288,14 @@ func ImportKs() {
 }
 
 func EmitSubscribe() {
-	apiKEY := env.GoDotEnv("ALCHEMY_API_KEY")
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("env loaded")
+	}
+
+	apiKEY := os.Getenv("ALCHEMY_API_KEY")
 	client, err := ethclient.Dial("wss://eth-mainnet.g.alchemy.com/v2/" + apiKEY)
 	if err != nil {
 		panic(err)
