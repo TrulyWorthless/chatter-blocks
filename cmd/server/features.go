@@ -19,9 +19,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/joho/godotenv"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
-	"github.com/trulyworthless/chatter-blocks/pkg/env"
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
@@ -99,7 +99,14 @@ func construct(client *ethclient.Client, privateRSAKey *rsa.PrivateKey, privateE
 			_, _, instance := web3.DeployContract(client, privateECDSAKey)
 			message(client, privateRSAKey, privateECDSAKey, instance)
 		case "N", "n":
-			address := env.GoDotEnv("CHANNEL_ADDRESS")
+			err := godotenv.Load()
+			if err != nil {
+				panic(err)
+			} else {
+				fmt.Println("env loaded")
+			}
+
+			address := os.Getenv("CHANNEL_ADDRESS")
 			message(client, privateRSAKey, privateECDSAKey, web3.GetContract(client, common.HexToAddress(address)))
 		default:
 			fmt.Printf("I'm sorry, but I dont know that response")

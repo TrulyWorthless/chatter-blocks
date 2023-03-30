@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/joho/godotenv"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
-	"github.com/trulyworthless/chatter-blocks/pkg/env"
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
@@ -99,7 +99,14 @@ func login(name string) {
 	privateRSAKey := crypt.RetrieveRSAPrivateKey(name)
 
 	//load ecdsa key
-	ganacheKEY := env.GoDotEnv(name)
+	err2 := godotenv.Load()
+	if err2 != nil {
+		panic(err)
+	} else {
+		fmt.Println("env loaded")
+	}
+
+	ganacheKEY := os.Getenv(name)
 	privateECDSAKey, err := crypto.HexToECDSA(ganacheKEY)
 	if err != nil {
 		panic(err)

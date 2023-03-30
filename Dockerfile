@@ -1,12 +1,8 @@
-FROM golang
+FROM golang:1.20.2
 
-RUN mkdir /app
+WORKDIR /usr/src/app
 
-ADD . /app
+RUN go install github.com/cosmtrek/air@latest
 
-WORKDIR /app
-
-RUN go build -o main ./main.go
-
-EXPOSE 5432
-CMD [ "/app/main" ]
+COPY . .
+RUN go mod tidy
