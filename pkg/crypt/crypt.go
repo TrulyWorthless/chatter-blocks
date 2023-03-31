@@ -1,7 +1,6 @@
 package crypt
 
 import (
-	"bufio"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,55 +11,26 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
-func GenerateRSAPrivateKeyFile(name string) {
+func GenerateRSAPrivateKeyToBytes() []byte {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 
-	pemfile, err := filesystem.CreateFile("identities", name, ".pem")
-	if err != nil {
-		panic(err)
-	}
-
-	var pemkey = &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privatekey)}
-
-	err = pem.Encode(pemfile, pemkey)
-	if err != nil {
-		panic(err)
-	}
+	return x509.MarshalPKCS1PrivateKey(privatekey)
 }
 
-func RetrieveRSAPrivateKey(name string) *rsa.PrivateKey {
-	privateKeyFile, err := filesystem.OpenFile("identities", name, ".pem")
+func GetRSAPrivateKeyFromBytes(keyBytes []byte) *rsa.PrivateKey {
+	privatekey, err := x509.ParsePKCS1PrivateKey(keyBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	pemfileinfo, _ := privateKeyFile.Stat()
-	var size int64 = pemfileinfo.Size()
-	pembytes := make([]byte, size)
-
-	buffer := bufio.NewReader(privateKeyFile)
-	_, err = buffer.Read(pembytes)
-	if err != nil {
-		panic(err)
-	}
-
-	data, _ := pem.Decode([]byte(pembytes))
-
-	privateKeyImported, err := x509.ParsePKCS1PrivateKey(data.Bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	return privateKeyImported
+	return privatekey
 }
 
-func GenerateRSAPublicKeyFile(name string, publicKey *rsa.PublicKey) {
-	pemfile, err := filesystem.CreateFile("contacts", name, ".pem")
+func GenerateRSAPublicKeyFile(fileName string, publicKey *rsa.PublicKey) {
+	pemfile, err := filesystem.CreateFile("exports", fileName, ".pem")
 	if err != nil {
 		panic(err)
 	}
@@ -75,8 +45,8 @@ func GenerateRSAPublicKeyFile(name string, publicKey *rsa.PublicKey) {
 	}
 }
 
-func RetrieveRSAPublicKey(name string) *rsa.PublicKey {
-	publicKeyFile, err := filesystem.OpenFile("contacts", name, ".pem")
+func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
+	publicKeyFile, err := filesystem.OpenFile("contacts", fileName, ".pem")
 	if err != nil {
 		panic(err)
 	}
@@ -85,20 +55,16 @@ func RetrieveRSAPublicKey(name string) *rsa.PublicKey {
 	var size int64 = pemfileinfo.Size()
 	pembytes := make([]byte, size)
 
-	buffer := bufio.NewReader(publicKeyFile)
-	_, err = buffer.Read(pembytes)
+	return pembytes
+}
+
+func RetrieveRSAPublicKeyFromBytes(pembytes []byte) *rsa.PublicKey {
+	publicKey, err := x509.ParsePKCS1PublicKey(pembytes)
 	if err != nil {
 		panic(err)
 	}
 
-	data, _ := pem.Decode([]byte(pembytes))
-
-	publicKeyImported, err := x509.ParsePKCS1PublicKey(data.Bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	return publicKeyImported
+	return publicKey
 }
 
 func EncryptMessage(privateKey *rsa.PrivateKey, message string) []byte {

@@ -44,8 +44,7 @@ func InitDb() {
 
 	//migrate
 	log.Println("running migrations")
-	//TODO remove facts
-	db.AutoMigrate(&models.Fact{}, &models.Contact{}, &models.Identity{})
+	db.AutoMigrate(&models.Identity{}, &models.Contact{})
 
 	DB = Dbinstance{
 		Db: db,

@@ -64,3 +64,5 @@ func DeleteFile(folder, file, extension string) error {
 
 	return nil
 }
+
+//TODO IMPORT

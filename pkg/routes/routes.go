@@ -13,21 +13,25 @@ func InitRoutes(app *fiber.App) {
 	// Login Route
 	app.Post("/login", handlers.Login)
 
-	//Facts Routes
-	app.Get("/listfacts", handlers.ListFacts)
-	app.Post("/createfact", handlers.CreateFact)
-
 	// Identities Routes
-	app.Post("/identities", handlers.CreateIdentity)
+	app.Post("/identity", handlers.CreateIdentity)
 	app.Get("/identities", handlers.GetIdentities)
-	app.Get("/identities/{uuid}", handlers.GetIdentity)
-	app.Put("/identities/{uuid}", handlers.UpdateIdentity)
-	app.Delete("/identities/{uuid}", handlers.DeletIdentity)
+	app.Get("/identity/id/:id", handlers.GetIdentityById)
+	app.Get("/identity/alias/:alias", handlers.GetIdentityByAlias)
+	app.Put("/identity/id/:id", handlers.UpdateIdentityByID)
+	app.Put("/identity/alias/:alias", handlers.UpdateIdentityByAlias)
+	app.Delete("/identity/id/:id", handlers.DeletIdentityByID)
+	app.Delete("/identity/alias/:alias", handlers.DeletIdentityByAlias)
 
 	// Contacts Routes
 	app.Post("/contacts", handlers.CreateContact)
 	app.Get("/contacts", handlers.GetContacts)
-	app.Get("/contacts/{uuid}", handlers.GetContact)
-	app.Put("/contacts/{uuid}", handlers.UpdateContact)
-	app.Delete("/contacts/{uuid}", handlers.DeleteContact)
+	app.Get("/identity/id/:id", handlers.GetContactById)
+	app.Get("/identity/alias/:alias", handlers.GetContactByAlias)
+	app.Put("/contacts/id/:id", handlers.UpdateContactById)
+	app.Put("/contacts/:alias", handlers.UpdateContactByAlias)
+	app.Delete("/contacts/id/:id", handlers.DeleteContactById)
+	app.Delete("/contacts/alias/:alias", handlers.DeleteContactByAlias)
+
+	//Export
 }

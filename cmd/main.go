@@ -18,8 +18,6 @@ func main() {
 	//init routes
 	routes.InitRoutes(app)
 
-	//TODO Seed DB
-
 	//start app
 	fmt.Println("Listening to port 3000")
 	app.Listen(":3000")
