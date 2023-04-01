@@ -16,7 +16,6 @@ func CreateIdentity(c *fiber.Ctx) error {
 
 	database.DB.Db.Create(&identity)
 
-	//TODO insecury, do not send back private key
 	return c.Status(200).JSON(identity)
 }
 
@@ -80,7 +79,8 @@ func UpdateIdentityByAlias(c *fiber.Ctx) error {
 	return c.Status(200).JSON(identity)
 }
 
-func DeletIdentityByID(c *fiber.Ctx) error {
+// TODO remove WHERE "contacts"."deleted_at" IS NULL
+func DeleteIdentityByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	identity := models.Identity{}
 	result := database.DB.Db.Where("id = ?", id).Delete(&identity)
@@ -92,7 +92,7 @@ func DeletIdentityByID(c *fiber.Ctx) error {
 	return c.Status(200).JSON(identity)
 }
 
-func DeletIdentityByAlias(c *fiber.Ctx) error {
+func DeleteIdentityByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := models.Identity{}
 	result := database.DB.Db.Where("alias = ?", alias).Delete(&identity)

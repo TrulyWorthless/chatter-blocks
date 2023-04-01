@@ -22,9 +22,9 @@ func CreateFile(folder, file, extension string) (*os.File, error) {
 }
 
 func OpenFile(folder, file, extension string) (*os.File, error) {
-	if _, err := os.Stat(filepath.Join(folder, file+extension)); err != nil {
-		return nil, fmt.Errorf("filesystem: '%s/%s' already exists", folder, file+extension)
-	}
+	// if _, err := os.Stat(filepath.Join(folder, file+extension)); err != nil {
+	// 	return nil, fmt.Errorf("filesystem: '%s/%s' already exists", folder, file+extension)
+	// }
 
 	f, err := os.Open(filepath.Join(folder, file+extension))
 	if err != nil {
@@ -64,5 +64,3 @@ func DeleteFile(folder, file, extension string) error {
 
 	return nil
 }
-
-//TODO IMPORT

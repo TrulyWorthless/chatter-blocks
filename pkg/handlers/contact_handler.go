@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/database"
@@ -9,11 +11,12 @@ import (
 
 func CreateContact(c *fiber.Ctx) error {
 	contact := new(models.Contact)
-	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
 	if err := c.BodyParser(contact); err != nil {
 		return c.Status(503).SendString(err.Error())
 	}
 
+	fmt.Println(contact.Alias)
+	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
 	database.DB.Db.Create(&contact)
 
 	return c.Status(200).JSON(contact)
@@ -79,6 +82,7 @@ func UpdateContactByAlias(c *fiber.Ctx) error {
 	return c.Status(200).JSON(contact)
 }
 
+// TODO remove WHERE "contacts"."deleted_at" IS NULL
 func DeleteContactById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	contact := models.Contact{}

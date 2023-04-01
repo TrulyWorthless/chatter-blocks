@@ -23,9 +23,9 @@ import (
 )
 
 func GenerateBlockchainAddressFile(name string, address common.Address) {
-	//TODO use commo.Address
+	//TODO use common.Address
 	file, _ := json.MarshalIndent(address, "", " ")
-	jsonfile, err := filesystem.CreateFile("contacts", name, ".json")
+	jsonfile, err := filesystem.CreateFile("exports", name, ".json")
 	if err != nil {
 		panic(err)
 	}
