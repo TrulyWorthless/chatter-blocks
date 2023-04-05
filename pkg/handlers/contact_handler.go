@@ -7,6 +7,7 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/database"
 	"github.com/trulyworthless/chatter-blocks/pkg/database/models"
+	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
 func CreateContact(c *fiber.Ctx) error {
@@ -15,8 +16,8 @@ func CreateContact(c *fiber.Ctx) error {
 		return c.Status(503).SendString(err.Error())
 	}
 
-	fmt.Println(contact.Alias)
 	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
+	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
 	database.DB.Db.Create(&contact)
 
 	return c.Status(200).JSON(contact)
@@ -66,6 +67,9 @@ func UpdateContactById(c *fiber.Ctx) error {
 		return c.Status(503).SendString(err.Error())
 	}
 
+	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
+	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
+
 	database.DB.Db.Where("id = ?", id).Updates(&contact)
 	return c.Status(200).JSON(contact)
 }
@@ -77,6 +81,11 @@ func UpdateContactByAlias(c *fiber.Ctx) error {
 	if err := c.BodyParser(contact); err != nil {
 		return c.Status(503).SendString(err.Error())
 	}
+
+	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
+	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
+	fmt.Println(web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex())
+	fmt.Println("**********")
 
 	database.DB.Db.Where("alias = ?", alias).Updates(&contact)
 	return c.Status(200).JSON(contact)

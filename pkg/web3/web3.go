@@ -10,9 +10,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,7 +31,7 @@ func GenerateBlockchainAddressFile(name string, address common.Address) {
 	jsonfile.Write(file)
 }
 
-func RetrieveBlockchainAddress(name string) common.Address {
+func RetrieveBlockchainAddressFromFile(name string) common.Address {
 	var address common.Address
 	jsonfile, err := filesystem.OpenFile("contacts", name, ".json")
 	if err != nil {
@@ -63,37 +61,6 @@ func GenerateEOA() *ecdsa.PrivateKey {
 	}
 
 	return privateKey
-}
-
-// TODO: file name?
-func CreateKeysStore(privateKey *ecdsa.PrivateKey, pass string) accounts.Account {
-	ks := keystore.NewKeyStore("./wallets", keystore.StandardScryptN, keystore.StandardScryptP)
-	account, err := ks.ImportECDSA(privateKey, pass)
-	if err != nil {
-		panic(err)
-	}
-
-	return account
-}
-
-// TODO: fix how it reads and writes
-func ImportKeysStore(file, pass string) accounts.Account {
-	ks := keystore.NewKeyStore("/wallets", keystore.StandardScryptN, keystore.StandardScryptP)
-	// jsonBytes, err := ioutil.ReadFile(file)
-	jsonBytes, err := os.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
-
-	account, err := ks.Import(jsonBytes, pass, pass)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := os.Remove(file); err != nil {
-		panic(err)
-	}
-	return account
 }
 
 func GetBalance(client *ethclient.Client, address string) *big.Float {
@@ -252,39 +219,6 @@ func SubmitTransaction(client *ethclient.Client, privateKey *ecdsa.PrivateKey, i
 	}
 
 	return tx
-}
-
-func CreateKs() {
-	ks := keystore.NewKeyStore("./tmp", keystore.StandardScryptN, keystore.StandardScryptP)
-	password := "secret"
-	account, err := ks.NewAccount(password)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(account.Address.Hex()) // 0x20F8D42FB0F667F2E53930fed426f225752453b3
-}
-
-func ImportKs() {
-	file := "tmp/UTC--2023-02-19T04-51-14.589991000Z--db56cf470ee09e536016b87428ed52f7d8b60c7f"
-	ks := keystore.NewKeyStore("/tmp", keystore.StandardScryptN, keystore.StandardScryptP)
-	// jsonBytes, err := ioutil.ReadFile(file)
-	jsonBytes, err := os.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
-
-	password := "secret"
-	account, err := ks.Import(jsonBytes, password, password)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(account.Address.Hex()) // 0x20F8D42FB0F667F2E53930fed426f225752453b3
-
-	if err := os.Remove(file); err != nil {
-		panic(err)
-	}
 }
 
 func EmitSubscribe() {

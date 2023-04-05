@@ -9,10 +9,6 @@ func InitRoutes(app *fiber.App) {
 	// Home Route
 	app.Get("/", handlers.Home)
 
-	//TODO
-	// Login Route
-	app.Post("/login", handlers.Login)
-
 	// Identities Routes
 	app.Post("/identity", handlers.CreateIdentity)
 	app.Get("/identities", handlers.GetIdentities)

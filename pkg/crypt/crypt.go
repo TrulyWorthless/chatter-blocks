@@ -1,6 +1,7 @@
 package crypt
 
 import (
+	"bufio"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -57,7 +58,15 @@ func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
 	var size int64 = pemfileinfo.Size()
 	pembytes := make([]byte, size)
 
-	return pembytes
+	buffer := bufio.NewReader(publicKeyFile)
+	_, err = buffer.Read(pembytes)
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ := pem.Decode([]byte(pembytes))
+
+	return data.Bytes
 }
 
 func RetrieveRSAPublicKeyFromBytes(pembytes []byte) *rsa.PublicKey {

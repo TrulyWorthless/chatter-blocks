@@ -7,6 +7,7 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/database/models"
 )
 
+// TODO remove returning private keys
 func CreateIdentity(c *fiber.Ctx) error {
 	identity := new(models.Identity)
 	identity.RSA = crypt.GenerateRSAPrivateKeyToBytes()
