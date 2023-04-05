@@ -365,12 +365,17 @@ MigrationBackup/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# build files
 /build
-
-/cmd/web3/
+/tmp
 
 # Environment variables
 .env
-private.key
-public.key
-private.pem
+*.pem
+*.json
+
+# scripts
+/scripts
+
+# temp
+example.txt
