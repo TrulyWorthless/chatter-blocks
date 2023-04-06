@@ -12,6 +12,31 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
+func EncryptMessage(privateKey *rsa.PrivateKey, message string) []byte {
+	publicKey := privateKey.PublicKey
+
+	encryptedBytes, err := rsa.EncryptOAEP(
+		sha256.New(),
+		rand.Reader,
+		&publicKey,
+		[]byte(message),
+		nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return encryptedBytes
+}
+
+func DecryptMessage(privateKey *rsa.PrivateKey, encryptedBytes []byte) string {
+	decryptBytes, err := privateKey.Decrypt(nil, encryptedBytes, &rsa.OAEPOptions{Hash: crypto.SHA256})
+	if err != nil {
+		panic(err)
+	}
+
+	return string(decryptBytes)
+}
+
 func GenerateRSAPrivateKeyToBytes() []byte {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -36,6 +61,9 @@ func GenerateRSAPublicKeyFile(fileName string, publicKey *rsa.PublicKey) error {
 		return err
 	}
 
+	//TODO defer verify
+	defer pemfile.Close()
+
 	var pemkey = &pem.Block{
 		Type:  "RSA PUBLIC KEY",
 		Bytes: x509.MarshalPKCS1PublicKey(publicKey)}
@@ -53,6 +81,9 @@ func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
 	if err != nil {
 		panic(err)
 	}
+
+	//TODO defer verify
+	defer publicKeyFile.Close()
 
 	pemfileinfo, _ := publicKeyFile.Stat()
 	var size int64 = pemfileinfo.Size()
@@ -76,29 +107,4 @@ func RetrieveRSAPublicKeyFromBytes(pembytes []byte) *rsa.PublicKey {
 	}
 
 	return publicKey
-}
-
-func EncryptMessage(privateKey *rsa.PrivateKey, message string) []byte {
-	publicKey := privateKey.PublicKey
-
-	encryptedBytes, err := rsa.EncryptOAEP(
-		sha256.New(),
-		rand.Reader,
-		&publicKey,
-		[]byte(message),
-		nil)
-	if err != nil {
-		panic(err)
-	}
-
-	return encryptedBytes
-}
-
-func DecryptMessage(privateKey *rsa.PrivateKey, encryptedBytes []byte) string {
-	decryptBytes, err := privateKey.Decrypt(nil, encryptedBytes, &rsa.OAEPOptions{Hash: crypto.SHA256})
-	if err != nil {
-		panic(err)
-	}
-
-	return string(decryptBytes)
 }

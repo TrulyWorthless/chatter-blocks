@@ -20,38 +20,36 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
-func GenerateBlockchainAddressFile(name string, address common.Address) {
-	//TODO use common.Address
-	file, _ := json.MarshalIndent(address, "", " ")
-	jsonfile, err := filesystem.CreateFile("exports", name, ".json")
-	if err != nil {
-		panic(err)
-	}
+var CurrentConnection *ClientConnection
 
-	jsonfile.Write(file)
+type ClientConnection struct {
+	HttpClient *ethclient.Client
+	WsClient   *ethclient.Client
+	ctx        context.Context
 }
 
-func RetrieveBlockchainAddressFromFile(name string) common.Address {
-	var address common.Address
-	jsonfile, err := filesystem.OpenFile("contacts", name, ".json")
+func New() {
+	err := godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
 
-	jsonfileinfo, _ := jsonfile.Stat()
-	var size int64 = jsonfileinfo.Size()
-	jsonbytes := make([]byte, size)
-
-	buffer := bufio.NewReader(jsonfile)
-	_, err = buffer.Read(jsonbytes)
+	CurrentConnection := new(ClientConnection)
+	CurrentConnection.HttpClient, err = ethclient.Dial(os.Getenv("HTTP_RPC_URL"))
 	if err != nil {
 		panic(err)
 	}
+	// TODO
+	// defer CurrentConnection.HttpClient.Close()
 
-	//TODO use commo.Address
-	json.Unmarshal(jsonbytes, &address)
+	CurrentConnection.WsClient, err = ethclient.Dial(os.Getenv("WS_RPC_URL"))
+	if err != nil {
+		panic(err)
+	}
+	// TODO
+	// defer CurrentConnection.WsClient.Close()
 
-	return address
+	CurrentConnection.ctx = context.Background()
 }
 
 func GenerateEOA() *ecdsa.PrivateKey {
@@ -260,4 +258,44 @@ func EmitSubscribe() {
 			fmt.Println(len(block.Transactions())) // 7
 		}
 	}
+}
+
+func GenerateBlockchainAddressFile(name string, address common.Address) {
+	//TODO use common.Address
+	file, _ := json.MarshalIndent(address, "", " ")
+	jsonfile, err := filesystem.CreateFile("exports", name, ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO defer verify
+	defer jsonfile.Close()
+
+	jsonfile.Write(file)
+}
+
+func RetrieveBlockchainAddressFromFile(name string) common.Address {
+	var address common.Address
+	jsonfile, err := filesystem.OpenFile("contacts", name, ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO defer verify
+	defer jsonfile.Close()
+
+	jsonfileinfo, _ := jsonfile.Stat()
+	var size int64 = jsonfileinfo.Size()
+	jsonbytes := make([]byte, size)
+
+	buffer := bufio.NewReader(jsonfile)
+	_, err = buffer.Read(jsonbytes)
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO use commo.Address
+	json.Unmarshal(jsonbytes, &address)
+
+	return address
 }

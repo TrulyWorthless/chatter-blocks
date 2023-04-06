@@ -17,7 +17,7 @@ type Dbinstance struct {
 
 var DB Dbinstance
 
-func InitDb() {
+func New() {
 	fmt.Println("create db connection")
 	//configs
 	dsn := fmt.Sprintf(
@@ -44,7 +44,12 @@ func InitDb() {
 
 	//migrate
 	log.Println("running migrations")
-	db.AutoMigrate(&models.Identity{}, &models.Contact{})
+	err = db.AutoMigrate(&models.Identity{}, &models.Contact{})
+	//error check
+	if err != nil {
+		log.Fatal("Failed to migrate. \n", err)
+		os.Exit(1)
+	}
 
 	DB = Dbinstance{
 		Db: db,
