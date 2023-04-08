@@ -25,7 +25,7 @@ func validToken(t *jwt.Token, username string) bool {
 
 func validUser(username string, p string) (models.User, bool) {
 	user := models.User{}
-	result := database.DB.Db.Where("username = ?", username).First(&user)
+	result := database.Db.Where("username = ?", username).First(&user)
 	if result.RowsAffected == 0 {
 		return models.User{}, false
 	}
@@ -49,7 +49,7 @@ func CreateUser(c *fiber.Ctx) error {
 	}
 
 	user.Password = hash
-	if err := database.DB.Db.Create(&user).Error; err != nil {
+	if err := database.Db.Create(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "user not created", "data": err})
 	}
 
@@ -59,10 +59,10 @@ func CreateUser(c *fiber.Ctx) error {
 func GetUser(c *fiber.Ctx) error {
 	username := c.Params("username")
 	user := models.User{}
-	result := database.DB.Db.Where("username = ?", username).First(&user)
+	result := database.Db.Where("username = ?", username).First(&user)
 
 	if result.RowsAffected == 0 {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"status": "error", "message": "user not found", "data": nil})
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "message": "user found", "data": user.Username})
@@ -78,16 +78,16 @@ func UpdateUser(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 
 	if !validToken(token, username) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not updated: invalid token id", "data": nil})
+		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
 	user, valid := validUser(username, pi.Password)
 	if !valid {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not updated: user information not valid", "data": nil})
+		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
 	user.Password, _ = HashPassword(pi.NewPassword)
-	if err := database.DB.Db.Where("username = ?", username).Save(&user).Error; err != nil {
+	if err := database.Db.Where("username = ?", username).Updates(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "user not updated", "data": err})
 	}
 
@@ -104,17 +104,17 @@ func DeleteUser(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 
 	if !validToken(token, username) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not deleted: invalid token id", "data": nil})
+		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
 	user, valid := validUser(username, pi.Password)
 	if !valid {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not deleted: user information not valid", "data": nil})
+		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	if err := database.DB.Db.Where("username = ?", username).Delete(&user).Error; err != nil {
+	if err := database.Db.Where("username = ?", username).Delete(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "user not deleted", "data": err})
 	}
 
-	return c.Status(fiber.StatusNoContent).JSON(fiber.Map{"status": "success", "message": "user deleted", "data": nil})
+	return c.SendStatus(fiber.StatusNoContent)
 }

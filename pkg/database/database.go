@@ -12,12 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// TODO refactor so no more database.DB.Db.etc
-type Dbinstance struct {
-	Db *gorm.DB
-}
-
-var DB Dbinstance
+var Db *gorm.DB
 
 func InitDb() {
 	fmt.Println("create db connection")
@@ -48,7 +43,5 @@ func InitDb() {
 	log.Println("running migrations")
 	db.AutoMigrate(&models.User{}, &models.Identity{}, &models.Contact{})
 
-	DB = Dbinstance{
-		Db: db,
-	}
+	Db = db
 }

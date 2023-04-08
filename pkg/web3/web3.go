@@ -19,17 +19,19 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
-func GenerateBlockchainAddressFile(name string, address common.Address) {
+func GenerateBlockchainAddressFile(name string, address common.Address) error {
 	//TODO use common.Address
 	file, _ := json.MarshalIndent(address, "", " ")
 	jsonfile, err := filesystem.CreateFile("exports", name, ".json")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	defer jsonfile.Close()
 
 	jsonfile.Write(file)
+
+	return nil
 }
 
 func RetrieveBlockchainAddressFromFile(name string) common.Address {

@@ -47,11 +47,11 @@ func Login(c *fiber.Ctx) error {
 	password := input.Password
 	user, err := new(models.User), *new(error)
 
-	if err := database.DB.Db.Where(&models.User{Username: profile}).Find(&user).Error; err != nil {
+	if err := database.Db.Where(&models.User{Username: profile}).Find(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"status": "error", "message": "user not found", "data": err})
 		} else {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "cannot login: invalid username or password", "location": "primary", "data": nil})
+			return c.SendStatus(fiber.StatusUnauthorized)
 		}
 	}
 
@@ -61,7 +61,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if !CheckPasswordHash(password, ud.Password) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "cannot login: invalid username or password", "location": "secondary", "data": nil})
+		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)

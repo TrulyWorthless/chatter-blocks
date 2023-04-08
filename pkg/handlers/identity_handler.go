@@ -7,46 +7,47 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/database/models"
 )
 
-// TODO hide private key
 func CreateIdentity(c *fiber.Ctx) error {
 	identity := new(models.Identity)
 	identity.RSA = crypt.GenerateRSAPrivateKeyToBytes()
+	//TODO check if identity has edcas
 	if err := c.BodyParser(identity); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "identity not created: bad input", "data": err})
 	}
 
-	if err := database.DB.Db.Create(&identity).Error; err != nil {
+	if err := database.Db.Create(&identity).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity not created", "data": err})
 	}
 
-	//TODO
-	return c.Status(fiber.StatusCreated).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "message": "identity found", "data": identity.Alias})
 }
 
 func GetIdentities(c *fiber.Ctx) error {
 	identities := []models.Identity{}
-	result := database.DB.Db.Find(&identities)
+	result := database.Db.Find(&identities)
 
 	if result.RowsAffected == 0 {
 		return c.SendStatus(fiber.StatusNotFound)
 	}
 
+	// TODO hide private key
 	return c.Status(fiber.StatusOK).JSON(identities)
 }
 
 func GetIdentityByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := models.Identity{}
-	result := database.DB.Db.Where("alias = ?", alias).First(&identity)
+	result := database.Db.Where("alias = ?", alias).First(&identity)
 
 	if result.RowsAffected == 0 {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"status": "error", "message": "alias not found", "data": nil})
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(identity)
+	return c.Status(fiber.StatusOK).JSON(identity.Alias)
 }
 
 // TODO expand upon updates
+// TODO include patches
 func UpdateIdentityByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := new(models.Identity)
@@ -55,19 +56,20 @@ func UpdateIdentityByAlias(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "identity not updated: bad input", "data": err})
 	}
 
-	database.DB.Db.Where("alias = ?", alias).Updates(&identity)
-	return c.Status(fiber.StatusOK).JSON(identity)
+	if err := database.Db.Where("alias = ?", alias).Updates(&identity).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity not updated", "data": err})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(identity.Alias)
 }
 
-// TODO remove WHERE "contacts"."deleted_at" IS NULL
 func DeleteIdentityByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := models.Identity{}
-	result := database.DB.Db.Where("alias = ?", alias).Delete(&identity)
 
-	if result.RowsAffected == 0 {
-		return c.SendStatus(fiber.StatusNotFound)
+	if err := database.Db.Where("alias = ?", alias).Delete(&identity).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity not deleted", "data": err})
 	}
 
-	return c.Status(fiber.StatusNoContent).JSON(identity)
+	return c.SendStatus(fiber.StatusNoContent)
 }
