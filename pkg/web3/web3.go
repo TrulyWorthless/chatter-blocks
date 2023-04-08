@@ -8,15 +8,14 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/joho/godotenv"
 	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
+	"github.com/trulyworthless/chatter-blocks/pkg/config"
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 )
 
@@ -28,6 +27,8 @@ func GenerateBlockchainAddressFile(name string, address common.Address) {
 		panic(err)
 	}
 
+	defer jsonfile.Close()
+
 	jsonfile.Write(file)
 }
 
@@ -37,6 +38,8 @@ func RetrieveBlockchainAddressFromFile(name string) common.Address {
 	if err != nil {
 		panic(err)
 	}
+
+	defer jsonfile.Close()
 
 	jsonfileinfo, _ := jsonfile.Stat()
 	var size int64 = jsonfileinfo.Size()
@@ -222,14 +225,7 @@ func SubmitTransaction(client *ethclient.Client, privateKey *ecdsa.PrivateKey, i
 }
 
 func EmitSubscribe() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	} else {
-		fmt.Println("env loaded")
-	}
-
-	apiKEY := os.Getenv("ALCHEMY_API_KEY")
+	apiKEY := config.Config("ALCHEMY_API_KEY")
 	client, err := ethclient.Dial("wss://eth-mainnet.g.alchemy.com/v2/" + apiKEY)
 	if err != nil {
 		panic(err)

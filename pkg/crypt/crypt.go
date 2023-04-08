@@ -36,6 +36,8 @@ func GenerateRSAPublicKeyFile(fileName string, publicKey *rsa.PublicKey) error {
 		return err
 	}
 
+	defer pemfile.Close()
+
 	var pemkey = &pem.Block{
 		Type:  "RSA PUBLIC KEY",
 		Bytes: x509.MarshalPKCS1PublicKey(publicKey)}
@@ -53,6 +55,8 @@ func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
 	if err != nil {
 		panic(err)
 	}
+
+	defer publicKeyFile.Close()
 
 	pemfileinfo, _ := publicKeyFile.Stat()
 	var size int64 = pemfileinfo.Size()

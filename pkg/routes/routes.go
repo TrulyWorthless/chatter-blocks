@@ -2,36 +2,50 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/trulyworthless/chatter-blocks/pkg/handlers"
+	"github.com/trulyworthless/chatter-blocks/pkg/middleware"
 )
 
 func InitRoutes(app *fiber.App) {
+	// Middleware
+	api := app.Group("/", logger.New())
+
 	// Home Route
-	app.Get("/", handlers.Home)
+	api.Get("/home", handlers.Home)
+
+	// Auth
+	auth := api.Group("/auth")
+	auth.Post("/login", handlers.Login)
+
+	// User
+	user := api.Group("/user")
+	user.Post("/", handlers.CreateUser)
+	user.Get("/:username", handlers.GetUser)
+	user.Put("/:username", middleware.Protected(), handlers.UpdateUser)
+	user.Delete("/:username", middleware.Protected(), handlers.DeleteUser)
 
 	// Identities Routes
-	app.Post("/identity", handlers.CreateIdentity)
-	app.Get("/identities", handlers.GetIdentities)
-	app.Get("/identity/id/:id", handlers.GetIdentityById)
-	app.Get("/identity/alias/:alias", handlers.GetIdentityByAlias)
-	app.Put("/identity/id/:id", handlers.UpdateIdentityByID)
-	app.Put("/identity/alias/:alias", handlers.UpdateIdentityByAlias)
-	app.Delete("/identity/id/:id", handlers.DeleteIdentityByID)
-	app.Delete("/identity/alias/:alias", handlers.DeleteIdentityByAlias)
+	identity := api.Group("/identity")
+	identity.Post("/", handlers.CreateIdentity)
+	identity.Get("/list", handlers.GetIdentities)
+	identity.Get("/alias/:alias", handlers.GetIdentityByAlias)
+	identity.Put("/alias/:alias", handlers.UpdateIdentityByAlias)
+	// identity.Delete("/alias/:alias", middleware.Protected(), handlers.DeleteIdentityByAlias)
+	identity.Delete("/alias/:alias", handlers.DeleteIdentityByAlias)
 
 	// Contacts Routes
-	app.Post("/contact", handlers.CreateContact)
-	app.Get("/contacts", handlers.GetContacts)
-	app.Get("/contact/id/:id", handlers.GetContactById)
-	app.Get("/contact/alias/:alias", handlers.GetContactByAlias)
-	app.Put("/contact/id/:id", handlers.UpdateContactById)
-	app.Put("/contact/:alias", handlers.UpdateContactByAlias)
-	app.Delete("/contact/id/:id", handlers.DeleteContactById)
-	app.Delete("/contact/alias/:alias", handlers.DeleteContactByAlias)
+	contact := api.Group("/contact")
+	contact.Post("/", handlers.CreateContact)
+	contact.Get("/list", handlers.GetContacts)
+	contact.Get("/correspondent/:correspondent", handlers.GetContactByCorrespondent)
+	contact.Put("/correspondent/:correspondent", handlers.UpdateContactByCorrespondent)
+	// contact.Delete("/alias/:alias", middleware.Protected(), handlers.DeleteContactByAlias)
+	contact.Delete("/correspondent/:correspondent", handlers.DeleteContactByCorrespondent)
 
 	//Export
-	app.Post("/export/pubkey/id/:id", handlers.ExportPublicKeyById)
-	app.Post("/export/pubkey/alias/:alias", handlers.ExportPublicKeyByAlias)
-	app.Post("/export/address/id/:id", handlers.ExportAddressById)
-	app.Post("/export/address/alias/:alias", handlers.ExportAddressByAlias)
+	//TODO Add remove files
+	export := api.Group("/export")
+	export.Post("/pubkey/alias/:alias", handlers.ExportPublicKeyByAlias)
+	export.Post("/address/alias/:alias", handlers.ExportAddressByAlias)
 }

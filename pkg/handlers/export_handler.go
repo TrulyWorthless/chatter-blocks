@@ -15,12 +15,12 @@ func ExportPublicKeyById(c *fiber.Ctx) error {
 	result := database.DB.Db.First(&identity, id)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(identity)
 }
 
 func ExportPublicKeyByAlias(c *fiber.Ctx) error {
@@ -29,12 +29,12 @@ func ExportPublicKeyByAlias(c *fiber.Ctx) error {
 	result := database.DB.Db.Where("alias = ?", alias).First(&identity)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(identity)
 }
 
 // TODO use common.Address
@@ -44,13 +44,13 @@ func ExportAddressById(c *fiber.Ctx) error {
 	result := database.DB.Db.First(&identity, id)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	p, _ := crypto.HexToECDSA(identity.ECDSA)
 	web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(identity)
 }
 
 func ExportAddressByAlias(c *fiber.Ctx) error {
@@ -59,11 +59,11 @@ func ExportAddressByAlias(c *fiber.Ctx) error {
 	result := database.DB.Db.Where("alias = ?", alias).First(&identity)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	p, _ := crypto.HexToECDSA(identity.ECDSA)
 	web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(identity)
 }
