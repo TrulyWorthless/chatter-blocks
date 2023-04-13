@@ -17,12 +17,13 @@ func InitRoutes(app *fiber.App) {
 	// Auth
 	auth := api.Group("/auth")
 	auth.Post("/login", handlers.Login)
+	auth.Post("/logout", middleware.Protected(), handlers.Logout)
 
 	// User
 	user := api.Group("/user")
 	user.Post("/", handlers.CreateUser)
 	user.Get("/:username", handlers.GetUser)
-	user.Put("/:username", middleware.Protected(), handlers.UpdateUser)
+	user.Patch("/:username", middleware.Protected(), handlers.UpdateUser)
 	user.Delete("/:username", middleware.Protected(), handlers.DeleteUser)
 
 	// Identities Routes

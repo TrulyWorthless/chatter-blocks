@@ -16,13 +16,6 @@ type PasswordInput struct {
 	NewPassword string `json:"newpass"`
 }
 
-func validToken(t *jwt.Token, username string) bool {
-	claims := t.Claims.(jwt.MapClaims)
-	uid := claims["username"]
-
-	return uid == username
-}
-
 func validUser(username string, p string) (models.User, bool) {
 	user := models.User{}
 	result := database.Db.Where("username = ?", username).First(&user)
@@ -30,7 +23,7 @@ func validUser(username string, p string) (models.User, bool) {
 		return models.User{}, false
 	}
 
-	if !CheckPasswordHash(p, user.Password) {
+	if !checkPasswordHash(p, user.Password) {
 		return models.User{}, false
 	}
 
@@ -43,7 +36,7 @@ func CreateUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not created: bad input", "data": err})
 	}
 
-	hash, err := HashPassword(user.Password)
+	hash, err := hashPassword(user.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "user not created: invalid password", "data": err})
 	}
@@ -86,7 +79,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user.Password, _ = HashPassword(pi.NewPassword)
+	user.Password, _ = hashPassword(pi.NewPassword)
 	if err := database.Db.Where("username = ?", username).Updates(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "user not updated", "data": err})
 	}

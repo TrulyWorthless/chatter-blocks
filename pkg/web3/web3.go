@@ -22,7 +22,7 @@ import (
 func GenerateBlockchainAddressFile(name string, address common.Address) error {
 	//TODO use common.Address
 	file, _ := json.MarshalIndent(address, "", " ")
-	jsonfile, err := filesystem.CreateFile("exports", name, ".json")
+	jsonfile, err := filesystem.CreateFile("contacts", name, ".json")
 	if err != nil {
 		return err
 	}
@@ -41,8 +41,6 @@ func RetrieveBlockchainAddressFromFile(name string) common.Address {
 		panic(err)
 	}
 
-	defer jsonfile.Close()
-
 	jsonfileinfo, _ := jsonfile.Stat()
 	var size int64 = jsonfileinfo.Size()
 	jsonbytes := make([]byte, size)
@@ -55,6 +53,12 @@ func RetrieveBlockchainAddressFromFile(name string) common.Address {
 
 	//TODO use commo.Address
 	json.Unmarshal(jsonbytes, &address)
+
+	jsonfile.Close()
+	err = filesystem.DeleteFile("contacts/", name, ".json")
+	if err != nil {
+		panic(err)
+	}
 
 	return address
 }
