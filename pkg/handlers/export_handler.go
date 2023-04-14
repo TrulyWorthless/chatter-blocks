@@ -9,61 +9,74 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
+// TODO: combine files
 func ExportPublicKeyById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	identity := models.Identity{}
-	result := database.DB.Db.First(&identity, id)
+	result := database.Db.First(&identity, id)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
-	crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
+	err := crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity publickey not exported", "data": err})
+	}
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "message": "identity publickey exported", "data": identity.Alias})
 }
 
 func ExportPublicKeyByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := models.Identity{}
-	result := database.DB.Db.Where("alias = ?", alias).First(&identity)
+	result := database.Db.Where("alias = ?", alias).First(&identity)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
-	crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
+	err := crypt.GenerateRSAPublicKeyFile(identity.Alias, &crypt.GetRSAPrivateKeyFromBytes(identity.RSA).PublicKey)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity publickey not exported", "data": err})
+	}
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "message": "identity publickey exported", "data": identity.Alias})
 }
 
 // TODO use common.Address
 func ExportAddressById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	identity := models.Identity{}
-	result := database.DB.Db.First(&identity, id)
+	result := database.Db.First(&identity, id)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	p, _ := crypto.HexToECDSA(identity.ECDSA)
-	web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
+	err := web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity address not exported", "data": err})
+	}
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "message": "identity address exported", "data": identity.Alias})
 }
 
 func ExportAddressByAlias(c *fiber.Ctx) error {
 	alias := c.Params("alias")
 	identity := models.Identity{}
-	result := database.DB.Db.Where("alias = ?", alias).First(&identity)
+	result := database.Db.Where("alias = ?", alias).First(&identity)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
 	p, _ := crypto.HexToECDSA(identity.ECDSA)
-	web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
+	err := web3.GenerateBlockchainAddressFile(identity.Alias, crypto.PubkeyToAddress(p.PublicKey))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity address not exported", "data": err})
+	}
 
-	return c.Status(200).JSON(identity)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": "success", "message": "identity address exported", "data": identity.Alias})
 }

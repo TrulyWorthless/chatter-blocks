@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/database"
@@ -13,105 +11,70 @@ import (
 func CreateContact(c *fiber.Ctx) error {
 	contact := new(models.Contact)
 	if err := c.BodyParser(contact); err != nil {
-		return c.Status(503).SendString(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "contact not created: bad input", "data": err})
 	}
 
-	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
-	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
-	database.DB.Db.Create(&contact)
+	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Correspondent)
+	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Correspondent).Hex()
 
-	return c.Status(200).JSON(contact)
+	if err := database.Db.Create(&contact).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "contact not created", "data": err})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(contact)
 }
 
 func GetContacts(c *fiber.Ctx) error {
 	contacts := []models.Contact{}
-	result := database.DB.Db.Find(&contacts)
+	result := database.Db.Find(&contacts)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
-	return c.Status(200).JSON(contacts)
+	return c.Status(fiber.StatusOK).JSON(contacts)
 }
 
-func GetContactById(c *fiber.Ctx) error {
-	id := c.Params("id")
-	contacts := models.Contact{}
-	result := database.DB.Db.First(&contacts, id)
+func GetContactByCorrespondent(c *fiber.Ctx) error {
+	correspondent := c.Params("correspondent")
+	contact := models.Contact{}
+	result := database.Db.Where("correspondent = ?", correspondent).First(&contact)
 
 	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+		return c.SendStatus(fiber.StatusNotFound)
 	}
 
-	return c.Status(200).JSON(contacts)
-}
-
-func GetContactByAlias(c *fiber.Ctx) error {
-	alias := c.Params("alias")
-	contacts := models.Contact{}
-	result := database.DB.Db.First(&contacts, alias)
-
-	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
-	}
-
-	return c.Status(200).JSON(contacts)
+	return c.Status(fiber.StatusOK).JSON(contact)
 }
 
 // TODO expand upon updates
-func UpdateContactById(c *fiber.Ctx) error {
-	id := c.Params("id")
+// TODO include patches
+func UpdateContactByCorrespondent(c *fiber.Ctx) error {
+	correspondent := c.Params("correspondent")
 	contact := new(models.Contact)
 
 	if err := c.BodyParser(contact); err != nil {
-		return c.Status(503).SendString(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "contact not updated: bad input", "data": err})
 	}
 
-	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
-	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
+	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Correspondent)
+	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Correspondent).Hex()
 
-	database.DB.Db.Where("id = ?", id).Updates(&contact)
-	return c.Status(200).JSON(contact)
-}
-
-func UpdateContactByAlias(c *fiber.Ctx) error {
-	alias := c.Params("alias")
-	contact := new(models.Contact)
-
-	if err := c.BodyParser(contact); err != nil {
-		return c.Status(503).SendString(err.Error())
+	if err := database.Db.Where("correspondent = ?", correspondent).Updates(&contact).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "identity not updated", "data": err})
 	}
 
-	contact.PublicKey = crypt.RetrieveRSAPublicKeyFromFile(contact.Alias)
-	contact.Address = web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex()
-	fmt.Println(web3.RetrieveBlockchainAddressFromFile(contact.Alias).Hex())
-	fmt.Println("**********")
-
-	database.DB.Db.Where("alias = ?", alias).Updates(&contact)
-	return c.Status(200).JSON(contact)
+	return c.Status(fiber.StatusOK).JSON(contact)
 }
 
 // TODO remove WHERE "contacts"."deleted_at" IS NULL
-func DeleteContactById(c *fiber.Ctx) error {
-	id := c.Params("id")
+func DeleteContactByCorrespondent(c *fiber.Ctx) error {
+	correspondent := c.Params("correspondent")
 	contact := models.Contact{}
-	result := database.DB.Db.Where("id = ?", id).Delete(&contact)
 
-	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
+	if err := database.Db.Where("correspondent = ?", correspondent).Delete(&contact).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "contact not deleted", "data": err})
 	}
 
-	return c.Status(200).JSON(contact)
-}
-
-func DeleteContactByAlias(c *fiber.Ctx) error {
-	alias := c.Params("alias")
-	contact := models.Contact{}
-	result := database.DB.Db.Where("alias = ?", alias).Delete(&contact)
-
-	if result.RowsAffected == 0 {
-		return c.SendStatus(404)
-	}
-
-	return c.Status(200).JSON(contact)
+	return c.Status(fiber.StatusNoContent).JSON(contact)
 }

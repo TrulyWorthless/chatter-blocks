@@ -31,10 +31,12 @@ func GetRSAPrivateKeyFromBytes(keyBytes []byte) *rsa.PrivateKey {
 }
 
 func GenerateRSAPublicKeyFile(fileName string, publicKey *rsa.PublicKey) error {
-	pemfile, err := filesystem.CreateFile("exports", fileName, ".pem")
+	pemfile, err := filesystem.CreateFile("contacts", fileName, ".pem")
 	if err != nil {
 		return err
 	}
+
+	defer pemfile.Close()
 
 	var pemkey = &pem.Block{
 		Type:  "RSA PUBLIC KEY",
@@ -65,6 +67,13 @@ func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
 	}
 
 	data, _ := pem.Decode([]byte(pembytes))
+
+	//TODO at risk of bad state
+	publicKeyFile.Close()
+	err = filesystem.DeleteFile("contacts/", fileName, ".pem")
+	if err != nil {
+		panic(err)
+	}
 
 	return data.Bytes
 }

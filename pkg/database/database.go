@@ -5,26 +5,23 @@ import (
 	"log"
 	"os"
 
+	"github.com/trulyworthless/chatter-blocks/pkg/config"
 	"github.com/trulyworthless/chatter-blocks/pkg/database/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-type Dbinstance struct {
-	Db *gorm.DB
-}
-
-var DB Dbinstance
+var Db *gorm.DB
 
 func InitDb() {
 	fmt.Println("create db connection")
 	//configs
 	dsn := fmt.Sprintf(
 		"host=db user=%s password=%s dbname=%s port=5432 sslmode=disable TimeZone=America/Los_Angeles",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
+		config.Config("DB_USER"),
+		config.Config("DB_PASSWORD"),
+		config.Config("DB_NAME"),
 	)
 
 	//open gorm
@@ -44,9 +41,7 @@ func InitDb() {
 
 	//migrate
 	log.Println("running migrations")
-	db.AutoMigrate(&models.Identity{}, &models.Contact{})
+	db.AutoMigrate(&models.User{}, &models.Identity{}, &models.Contact{})
 
-	DB = Dbinstance{
-		Db: db,
-	}
+	Db = db
 }

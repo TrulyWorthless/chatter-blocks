@@ -15,8 +15,6 @@ func CreateFile(folder, file, extension string) (*os.File, error) {
 	if err != nil {
 		panic(err)
 	}
-	//TODO fix
-	// defer f.Close()
 
 	return f, nil
 }
@@ -30,8 +28,6 @@ func OpenFile(folder, file, extension string) (*os.File, error) {
 	if err != nil {
 		panic(err)
 	}
-	//TODO fix
-	// defer f.Close()
 
 	return f, nil
 }
@@ -45,8 +41,6 @@ func OverrideFile(folder, file, extension string) (*os.File, error) {
 	if err != nil {
 		panic(err)
 	}
-	//TODO fix
-	// defer f.Close()
 
 	return f, nil
 }

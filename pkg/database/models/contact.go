@@ -6,8 +6,9 @@ import (
 
 type Contact struct {
 	gorm.Model
-	Alias     string `gorm:"size:255;not null;unique" json:"alias"`
-	Address   string `gorm:"size:42;not null;unique" json:"address"`
-	PublicKey []byte `gorm:"not null;unique" json:"publickey"`
-	Channel   string `gorm:"size:42;unique" json:"channel"`
+	Correspondent string `gorm:"primaryKey;unique;size:100" json:"correspondent"`
+	// User          User   `gorm:"not null;" json:"user"`
+	Address   string `gorm:"unique;not null;size:42" json:"address"`
+	PublicKey []byte `gorm:"unique;not null" json:"publickey"`
+	Channel   string `gorm:"unique;size:42" json:"channel"`
 }

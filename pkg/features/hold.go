@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/joho/godotenv"
+	"github.com/trulyworthless/chatter-blocks/pkg/config"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
@@ -98,15 +98,7 @@ func login(name string) {
 	//load rsa key
 	privateRSAKey := crypt.RetrieveRSAPrivateKey(name)
 
-	//load ecdsa key
-	err2 := godotenv.Load()
-	if err2 != nil {
-		panic(err)
-	} else {
-		fmt.Println("env loaded")
-	}
-
-	ganacheKEY := os.Getenv(name)
+	ganacheKEY := config.Config(name)
 	privateECDSAKey, err := crypto.HexToECDSA(ganacheKEY)
 	if err != nil {
 		panic(err)
@@ -132,7 +124,7 @@ func logic(profile Profile) {
 		case "A", "a":
 			createContact()
 		case "B", "b":
-			address := env.GoDotEnv("CHANNEL_ADDRESS")
+			address := config.Config("CHANNEL_ADDRESS")
 			message(profile.httpClient, profile.privateRSAKey, profile.privateECDSAKey, web3.GetContract(profile.wsClient, common.HexToAddress(address)))
 		case "C", "c":
 			a, _, instance := web3.DeployContract(profile.httpClient, profile.privateECDSAKey)
