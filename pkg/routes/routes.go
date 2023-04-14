@@ -45,7 +45,6 @@ func InitRoutes(app *fiber.App) {
 	contact.Delete("/correspondent/:correspondent", handlers.DeleteContactByCorrespondent)
 
 	//Export
-	//TODO Add remove files
 	export := api.Group("/export")
 	export.Post("/pubkey/alias/:alias", handlers.ExportPublicKeyByAlias)
 	export.Post("/address/alias/:alias", handlers.ExportAddressByAlias)

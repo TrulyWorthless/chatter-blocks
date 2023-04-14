@@ -9,9 +9,6 @@ import (
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
-//TODO: handle overriding files
-//TODO: add file movement
-
 // TODO: combine files
 func ExportPublicKeyById(c *fiber.Ctx) error {
 	id := c.Params("id")

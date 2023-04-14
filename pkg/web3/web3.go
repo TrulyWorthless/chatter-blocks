@@ -54,6 +54,7 @@ func RetrieveBlockchainAddressFromFile(name string) common.Address {
 	//TODO use commo.Address
 	json.Unmarshal(jsonbytes, &address)
 
+	//TODO at risk of bad state
 	jsonfile.Close()
 	err = filesystem.DeleteFile("contacts/", name, ".json")
 	if err != nil {

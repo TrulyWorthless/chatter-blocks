@@ -68,6 +68,7 @@ func RetrieveRSAPublicKeyFromFile(fileName string) []byte {
 
 	data, _ := pem.Decode([]byte(pembytes))
 
+	//TODO at risk of bad state
 	publicKeyFile.Close()
 	err = filesystem.DeleteFile("contacts/", fileName, ".pem")
 	if err != nil {

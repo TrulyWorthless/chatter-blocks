@@ -8,7 +8,7 @@ import (
 type Identity struct {
 	gorm.Model
 	Alias string `gorm:"primaryKey;unique;size:100" json:"alias"`
-	// Username string `gorm:"size:100" json:"username"`
+	// User  User   `gorm:"not null;" json:"user"`
 	ECDSA string `gorm:"not null" json:"ecdsa"`
 	RSA   []byte `gorm:"not null" json:"rsa"`
 }
