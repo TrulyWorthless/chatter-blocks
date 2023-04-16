@@ -44,8 +44,13 @@ func InitRoutes(app *fiber.App) {
 	// contact.Delete("/alias/:alias", middleware.Protected(), handlers.DeleteContactByAlias)
 	contact.Delete("/correspondent/:correspondent", handlers.DeleteContactByCorrespondent)
 
-	//Export
+	// Export
 	export := api.Group("/export")
 	export.Post("/pubkey/alias/:alias", handlers.ExportPublicKeyByAlias)
 	export.Post("/address/alias/:alias", handlers.ExportAddressByAlias)
+
+	// Web3
+	web3 := api.Group("/web3")
+	web3.Get("/getbalance/:holder", handlers.GetBalance)
+	// web3.Get("/getbalance/token/:address/:holder", handlers.GetTokenBalance)
 }

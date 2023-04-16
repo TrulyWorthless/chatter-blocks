@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/trulyworthless/chatter-blocks/pkg/database"
 	"github.com/trulyworthless/chatter-blocks/pkg/routes"
+	"github.com/trulyworthless/chatter-blocks/pkg/web3"
 )
 
 func main() {
@@ -19,6 +20,9 @@ func main() {
 
 	//init routes
 	routes.InitRoutes(app)
+
+	//start rpc client
+	web3.Init()
 
 	//start app
 	fmt.Println("Listening to port 3000")

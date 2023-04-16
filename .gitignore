@@ -366,6 +366,7 @@ MigrationBackup/
 # vendor/
 
 # build files
+/pkg/web3/contracts/build
 /build
 /tmp
 

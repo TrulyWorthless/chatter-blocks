@@ -13,7 +13,7 @@ interface ISimpleChannel {
         Bob
     }
 
-    event MessageSubmit(uint256 index, Actor role, string message);
+    event MessageSubmit(uint256 indexed index, Actor indexed role, string message);
 
     function submitMessage(string memory text) external returns (bool);
 

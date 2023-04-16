@@ -19,11 +19,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	simplechannel "github.com/trulyworthless/chatter-blocks/bindings"
 	"github.com/trulyworthless/chatter-blocks/pkg/config"
 	"github.com/trulyworthless/chatter-blocks/pkg/crypt"
 	"github.com/trulyworthless/chatter-blocks/pkg/filesystem"
 	"github.com/trulyworthless/chatter-blocks/pkg/web3"
+	simplechannel "github.com/trulyworthless/chatter-blocks/pkg/web3/contracts/bindings/channel"
 )
 
 func export(profile Profile) {
